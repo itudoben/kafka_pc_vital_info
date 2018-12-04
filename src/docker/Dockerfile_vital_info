@@ -24,6 +24,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod 755 /app/entrypoint.sh
 
+# Send vital info
 #ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Keep this running so to connect and test to netcat to host.
