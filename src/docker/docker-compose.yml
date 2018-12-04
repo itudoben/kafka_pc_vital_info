@@ -1,0 +1,10 @@
+version: '3'
+services:
+  vi_machine:
+    build:
+      context: ./
+      dockerfile: Dockerfile_vital_info
+    image: vi_machine:dev
+
+#    with this could call curl http
+#    network_mode: "host"
