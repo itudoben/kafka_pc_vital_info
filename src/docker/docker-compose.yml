@@ -1,10 +1,20 @@
 version: '3'
 services:
-  vi_machine:
-    build:
-      context: ./
-      dockerfile: Dockerfile_vital_info
-    image: vi_machine:dev
+  zookeeper:
+    container_name: zookeeper
+    image: jplock/zookeeper
+    ports:
+    - 2181:2181
+    expose:
+    - 2181
+    network_mode: "bridge"
+
+#  vi_machine:
+#    build:
+#      context: ./
+#      dockerfile: Dockerfile_vital_info
+#    image: vi_machine:dev
 
 #    with this could call curl http
 #    network_mode: "host"
+

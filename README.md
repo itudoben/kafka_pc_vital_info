@@ -13,7 +13,7 @@ The goal of this project is to provide:
  - consumer to process incoming data and store the results in Hive. 
  - one command/script to set this all up.
 
-# TODO
+# TODO 
  - processing of selected Kafka Streams with a Machine Learning model for classification or prediction.
  - available for *nix platforms.
  
@@ -65,6 +65,9 @@ The IPs have been modified to get those set up by Docker machine.
 
 ## ZooKeeper
 ```bash
+cd src/docker
+docker-compose up -d zookeeper
+
 docker run -d \
 --name zookeeper \
 -p 2181:2181 \
@@ -77,17 +80,10 @@ docker run -d \
 --name kafka \
 -p 7203:7203 \
 -p 9092:9092 \
+-e KAFKA_BROKER_ID=1 \
 -e KAFKA_ADVERTISED_HOST_NAME=$(docker inspect zookeeper -f '{{.NetworkSettings.Gateway}}') \
--e ZOOKEEPER_IP=$(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}') \
-ches/kafka
-```
-
-```bash
-docker run -d \
---name kafka2 \
--p 7203:7203 \
--p 9092:9092 \
--e KAFKA_ADVERTISED_HOST_NAME=$(docker inspect zookeeper -f '{{.NetworkSettings.Gateway}}') \
+-e KAFKA_ADVERTISED_PORT=9092 \
+-e KAFKA_PORT=9092 \
 -e ZOOKEEPER_IP=$(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}') \
 ches/kafka
 ```
@@ -98,7 +94,7 @@ docker run \
 --rm ches/kafka kafka-topics.sh \
 --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
 --create \
---topic toto \
+--topic titi \
 --replication-factor 1 \
 --partitions 1
 ```
@@ -124,7 +120,7 @@ ches/kafka kafka-console-producer.sh \
 docker run --rm \
 -v $(pwd)/src/bash:/app/bin \
 ches/kafka \
-/app/bin/send_info.sh $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}') titi
+/app/bin/send_info.sh $(docker inspect kafka2 -f '{{.NetworkSettings.IPAddress}}') 29092 titi
 ```
 
 # Consumer on topic toto
