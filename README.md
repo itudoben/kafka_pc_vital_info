@@ -119,6 +119,14 @@ ches/kafka kafka-console-producer.sh \
 --topic toto
 ```
 
+## Send to topic 
+```bash
+docker run --rm \
+-v $(pwd)/src/bash:/app/bin \
+ches/kafka \
+/app/bin/send_info.sh $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}') titi
+```
+
 # Consumer on topic toto
 ```bash
 docker run --rm \
