@@ -2,7 +2,7 @@
 This project is at this moment a WORK IN PROGRESS v0.0.1. As the project goes, progress is shared via Git commits.
 
 I used technology documentations, blogs, articles, stashoverflow, google, etc. 
-I will make sure to give proper credits to the authors.
+I will make sure to give proper credits to the authors in the [references](#references) section.
 If I unintentionally missed anyone or made a mistake, please let me know through the 
 [Github issues](https://github.com/itudoben/kafka_pc_vital_info/issues) and I will correct it asap. 
 
@@ -63,10 +63,13 @@ The following command lines from the
 [article on setting up Kafka and ZooKeeper on Docker](https://link.medium.com/wKgcaLFgnS) are used with slight modifications.
 The IPs have been modified to get those set up by Docker machine. 
 
+# Set up Kafka
 ## ZooKeeper
 ```bash
 cd src/docker
 docker-compose up -d zookeeper
+
+or
 
 docker run -d \
 --name zookeeper \
@@ -147,5 +150,4 @@ mvn archetype:generate -DgroupId=com.jh.kafka.vitalinfo \
 - https://medium.com/@itseranga/kafka-and-zookeeper-with-docker-65cff2c2c34f
 - http://kafka.apache.org/documentation.html#quickstart
 - https://rubygems.org/gems/iStats/versions/1.2.0
-- 
   
