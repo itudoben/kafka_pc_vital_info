@@ -135,14 +135,168 @@ ches/kafka kafka-console-consumer.sh \
 --topic titi
 ```
 
+# Get the Number of partition for the topic
+```bash
+docker run --rm \
+    ches/kafka \
+    kafka-topics.sh --describe --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
+    --topic titi | awk '{print $2}' | uniq -c |awk 'NR==2{print "count of partitions=" $1}'
+```
+
 # Maven
-First let's create our Java producer that will stream vital information from the docker container to a Kafka topic.
+First let's create our Java producer that will stream information to a Kafka topic.
 
 ```bash
 mvn archetype:generate -DgroupId=com.jh.kafka.vitalinfo \
     -DartifactId=vitalinfo \
     -DarchetypeArtifactId=maven-archetype-quickstart \
     -DinteractiveMode=false
+```
+
+# ZooKeeper CLI
+
+Execute the ZK CLI from the running ZK container:
+```bash
+docker exec -ti $(docker inspect zookeeper -f "{{.Id}}") /opt/zookeeper/bin/zkCli.sh
+```
+
+Once in the ZK shell help lists all commands.
+```
+ls /brokers/ids # list all brokers
+get /broker/ids/<ID> # get details about broker ID
+```
+   
+# Vault
+
+Start up Vault server with Consul:
+```bash
+$ cd ./src/docker
+$ docker-compose -f docker-compose_vault.yml build && docker-compose -f docker-compose_vault.yml up -d 
+```
+
+## Check Vault Status
+
+One can run a shell in the running container and initialize HashiCorp Vault:
+```bash
+$ docker exec -it vault.server /bin/sh
+/ # export VAULT_ADDR=http://127.0.0.1:8200
+or using the Gateway also:
+/ # export VAULT_ADDR=http://172.27.0.1:8200           
+
+/ # vault operator init
+Unseal Key 1: 8iIWsSsW+G0AqCLBgcZFjdDOtMim/rU0+L3NgQfvdaDF
+Unseal Key 2: lBB2s2mJ/k61qqQYRa0HacEqFLeERBfRizrFdH4Zvx6V
+Unseal Key 3: 2k5mjT+fHHR5VKDyPVB3kP8wcql5Dly6FMYXe8fYVHzL
+Unseal Key 4: 1Z/5Eh+bDRAW8JX5Q54uL4lNGXDAqhmAIv02lW+7OCt/
+Unseal Key 5: SjpmJRD1iwH+pHAb41TxaQheDH4LZ1MYeK2g3SCd/BxO
+
+Initial Root Token: s.3IK4bjKJ6HVq4cL5wa5yWA5z
+
+Vault initialized with 5 key shares and a key threshold of 3. Please securely
+distribute the key shares printed above. When the Vault is re-sealed,
+restarted, or stopped, you must supply at least 3 of these keys to unseal it
+before it can start servicing requests.
+
+Vault does not store the generated master key. Without at least 3 key to
+reconstruct the master key, Vault will remain permanently sealed!
+
+It is possible to generate new unseal keys, provided you have a quorum of
+existing unseal keys shares. See "vault operator rekey" for more information.
+/ #  
+```
+
+From within the bash.test docker container one can test the vault:
+```bash
+$ docker exec -it bash.test /bin/sh
+# export VAULT_ADDR=http://172.27.0.1:9200
+# vault status
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       5
+Threshold          3
+Unseal Progress    0/3
+Unseal Nonce       n/a
+Version            1.0.0
+HA Enabled         true
+```
+
+Then unseal the vault using 3 of the unseal keys:
+```bash
+/ # vault operator unseal
+Unseal Key (will be hidden): 
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       5
+Threshold          3
+Unseal Progress    2/3
+Unseal Nonce       271fe22c-f0c4-5702-639c-240f25721af1
+Version            1.0.0
+HA Enabled         true
+/ # vault operator unseal
+```
+
+Write a secret, read, seal the vault and try to read the secret:
+```bash
+/ # vault write secret/toto email=toto@gmail.com value=pouet password=mypassword 
+Success! Data written to: secret/toto
+/ # vault read secret/toto 
+Key                 Value
+---                 -----
+refresh_interval    768h
+email               toto@gmail.com
+password            mypassword
+value               pouet
+/ # vault seal
+WARNING! The "vault seal" command is deprecated. Please use "vault operator
+seal" instead. This command will be removed in Vault 1.1.
+
+Success! Vault is sealed.
+/ # vault read secret/toto 
+Error reading secret/toto: Error making API request.
+
+URL: GET http://127.0.0.1:8200/v1/secret/toto
+Code: 503. Errors:
+
+* Vault is sealed
+/ # export VAULT_TOKEN=s.3IK4bjKJ6HVq4cL5wa5yWA5z
+or 
+/ # vault login s.3IK4bjKJ6HVq4cL5wa5yWA5z
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                s.3IK4bjKJ6HVq4cL5wa5yWA5z
+token_accessor       8rKX0xs20aVIDaoaKAuCV34x
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
+# vault secrets list
+
+/ # 
+```
+
+# Vault with GPG
+
+One can initialize Vault - vault init - using GPG public keys
+
+https://www.vaultproject.io/docs/concepts/pgp-gpg-keybase.html
+```bash
+gpg --gen-key
+
+XXX is the email address specified when the key is generated.
+gpg --list-keys shows all the keys.
+
+gpg --export XXX | base64 > unseal_key1.asc
 ```
 
 # References

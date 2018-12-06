@@ -1,13 +1,44 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.jh.kafka.vitalinfo</groupId>
     <artifactId>vitalinfo</artifactId>
     <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+
+    <version>0.0.1</version>
     <name>vitalinfo</name>
-    <url>http://maven.apache.org</url>
+
+    <url>https://github.com/itudoben/kafka_pc_vital_info</url>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -15,4 +46,68 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+
+        <profile>
+            <id>default</id>
+
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <dependencies>
+
+            </dependencies>
+
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>exec-maven-plugin</artifactId>
+                            <version>1.6.0</version>
+                            <executions>
+
+                                <!--
+                                To start this service from the parent project.
+
+                                mvn -DMAVEN_OPTS="-Xmx792m -XX:MaxPermSize=396m" -Dmaven.test.skip=true \
+                                exec:exec@kafkap \
+                                -Dc=/Users/hujol/Desktop/TESTS_UPLOAD
+                                -->
+                                <execution>
+                                    <id>kafkap</id>
+                                    <goals>
+                                        <goal>exec</goal>
+                                    </goals>
+
+                                    <!--
+                                    Example from the Maven plugin.
+                                    http://www.mojohaus.org/exec-maven-plugin/examples/example-exec-for-java-programs.html
+                                    -->
+
+                                    <configuration>
+                                        <executable>java</executable>
+                                        <arguments>
+                                            <argument>-classpath</argument>
+                                            <!-- automatically creates the classpath using all project dependencies,
+                                                 also adding the project build directory -->
+                                            <classpath/>
+                                            <argument>com.jh.kafka.vitalinfo.App</argument>
+                                            <argument>--somestuff=${c}</argument>
+                                        </arguments>
+                                    </configuration>
+
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+
+        </profile>
+
+    </profiles>
+
 </project>

@@ -21,5 +21,3 @@ docker run -d \
 -e KAFKA_PORT=$2 \
 -e ZOOKEEPER_IP=$(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}') \
 ches/kafka
-
-#

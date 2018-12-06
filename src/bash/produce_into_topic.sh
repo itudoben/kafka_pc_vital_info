@@ -14,4 +14,4 @@ fi
 
 docker run --rm \
     -v $(pwd)/.:/app/bin ches/kafka \
-    /app/bin/send_info.sh $(docker inspect kafka$1 -f '{{.NetworkSettings.IPAddress}}') $2 $3
+    /app/bin/send_info.sh $(docker inspect kafka$1 -f '{{.NetworkSettings.IPAddress}}'):$2 $3
