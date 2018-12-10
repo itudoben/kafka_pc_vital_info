@@ -72,67 +72,82 @@ docker-compose up -d zookeeper
 or
 
 docker run -d \
---name zookeeper \
--p 2181:2181 \
-jplock/zookeeper
+    --name zookeeper \
+    -p 2181:2181 \
+    jplock/zookeeper
 ```
 
-# Kafka docker
+# Kafka Broker
+To start a broker use the ./bin/bash/start_kafka_broker.sh command. Running it with no parameters show the usage.
+For instance:
 ```bash
-docker run -d \
---name kafka \
--p 7203:7203 \
--p 9092:9092 \
--e KAFKA_BROKER_ID=1 \
--e KAFKA_ADVERTISED_HOST_NAME=$(docker inspect zookeeper -f '{{.NetworkSettings.Gateway}}') \
--e KAFKA_ADVERTISED_PORT=9092 \
--e KAFKA_PORT=9092 \
--e ZOOKEEPER_IP=$(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}') \
-ches/kafka
+./bin/bash/start_kafka_broker.sh 1 9092
 ```
 
 # Create a topic
 ```bash
 docker run \
---rm ches/kafka kafka-topics.sh \
---zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
---create \
---topic titi \
---replication-factor 1 \
---partitions 1
+    --rm ches/kafka kafka-topics.sh \
+    --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
+    --create \
+    --topic memory \
+    --replication-factor 3 \
+    --partitions 1
+```
+
+# Alter a topic
+```bash
+docker run \
+    -v /Users/hujol/Projects/kafka_streaming/kafka_pc_vital_info/src/bash/modification_topic_replica.json:/kafka/modification_topic_replica.json \
+    --rm ches/kafka \
+    kafka-reassign-partitions.sh \
+    --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
+    --reassignment-json-file /kafka/modification_topic_replica.json \
+    --execute
 ```
 
 # List the topics
 ```bash
 docker run \
---rm ches/kafka kafka-topics.sh \
---zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
---list
+    kafka-topics.sh \
+    --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
+    --list
+```
+
+# Describe a topic (partitions, replicas, etc)
+```bash
+docker run \
+    --rm ches/kafka kafka-topics.sh \
+    --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
+    --describe \
+    --topic memory
 ```
 
 # Producer on topic toto
+
+Get the broker ID defined when first creating the Kafka broker with the port and use them here with the 
+topic.
+
 ```bash
 docker run --rm --interactive \
-ches/kafka kafka-console-producer.sh \
---broker-list $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}'):9092 \
---topic toto
+    ches/kafka kafka-console-producer.sh \
+    --broker-list $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}'):9092 \
+    --topic toto
 ```
 
 ## Send to topic 
 ```bash
-docker run --rm \
--v $(pwd)/src/bash:/app/bin \
-ches/kafka \
-/app/bin/send_info.sh $(docker inspect kafka2 -f '{{.NetworkSettings.IPAddress}}') 29092 titi
+cd src/bash
+./produce_into_topic.sh 1 9092 memory
 ```
 
 # Consumer on topic toto
 ```bash
 docker run --rm \
-ches/kafka kafka-console-consumer.sh \
---bootstrap-server $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}'):9092 \
---from-beginning \
---topic titi
+    ches/kafka kafka-console-consumer.sh \
+    --bootstrap-server $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}'):9092 \
+    --from-beginning \
+    --topic memory
 ```
 
 # Get the Number of partition for the topic
@@ -140,7 +155,15 @@ ches/kafka kafka-console-consumer.sh \
 docker run --rm \
     ches/kafka \
     kafka-topics.sh --describe --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
-    --topic titi | awk '{print $2}' | uniq -c |awk 'NR==2{print "count of partitions=" $1}'
+    --topic memory | awk '{print $2}' | uniq -c |awk 'NR==2{print "count of partitions=" $1}'
+```
+
+# Add partitions to existing topic
+```bash
+docker run --rm \
+    ches/kafka \
+    kafka-topics.sh --alter --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
+    --topic memory --partitions 3
 ```
 
 # Maven
@@ -153,6 +176,16 @@ mvn archetype:generate -DgroupId=com.jh.kafka.vitalinfo \
     -DinteractiveMode=false
 ```
 
+## run the app in docker
+```bash
+docker run -ti \
+    -v /Users/hujol/.m2/repository:/root/.m2/repository \
+    -v /Users/hujol/.m2/settings-local.xml:/root/.m2/settings.xml \
+    -v /Users/hujol/Projects/kafka_streaming/kafka_pc_vital_info/vitalinfo:/app/kafkap \
+    maven:3.6-alpine \
+    mvn -f /app/kafkap/pom.xml -DMAVEN_OPTS="-Xmx792m -XX:MaxPermSize=396m" -Dmaven.test.skip=true exec:exec@kafkap
+```
+
 # ZooKeeper CLI
 
 Execute the ZK CLI from the running ZK container:
@@ -163,7 +196,7 @@ docker exec -ti $(docker inspect zookeeper -f "{{.Id}}") /opt/zookeeper/bin/zkCl
 Once in the ZK shell help lists all commands.
 ```
 ls /brokers/ids # list all brokers
-get /broker/ids/<ID> # get details about broker ID
+get /brokers/ids/<ID> # get details about broker ID
 ```
    
 # Vault

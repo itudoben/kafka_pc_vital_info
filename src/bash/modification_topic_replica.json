@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "partitions": [
+    {
+      "topic": "memory",
+      "partition": 0,
+      "replicas": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "topic": "memory",
+      "partition": 1,
+      "replicas": [
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "topic": "memory",
+      "partition": 2,
+      "replicas": [
+        3,
+        1,
+        2
+      ]
+    }
+  ]
+}
