@@ -13,5 +13,5 @@ if [ -z "$1" -o -z "$2" -o -z "$3" ]; then
 fi
 
 docker run --rm \
-    -v $(pwd)/.:/app/bin ches/kafka \
+    -v $(pwd)/.:/app/bin localhost:8082/ches/kafka \
     /app/bin/send_info.sh $(docker inspect kafka$1 -f '{{.NetworkSettings.IPAddress}}'):$2 $3

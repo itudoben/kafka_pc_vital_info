@@ -3,7 +3,7 @@ services:
   consul:
     container_name: consul.server
     command: agent -server -bind 0.0.0.0 -client 0.0.0.0 -bootstrap-expect=1
-    image: consul:latest
+    image: localhost:8082/consul:latest
     volumes:
     - ./etc/consul.server/config:/consul/config
     ports:
@@ -13,7 +13,7 @@ services:
 
   vault:
     container_name: vault.server
-    image: vault
+    image: localhost:8082/vault
     ports:
     - "9200:8200"
     volumes:

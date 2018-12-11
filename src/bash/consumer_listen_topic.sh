@@ -12,7 +12,7 @@ if [ -z "$1" -o -z "$2" -o -z "$3" ]; then
     exit 1
 fi
 
-docker run --rm ches/kafka \
+docker run --rm localhost:8082/ches/kafka \
     kafka-console-consumer.sh --new-consumer \
     --bootstrap-server $(docker inspect kafka$1 -f '{{.NetworkSettings.IPAddress}}'):$2 \
     --topic $3

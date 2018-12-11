@@ -63,16 +63,32 @@ The following command lines from the
 [article on setting up Kafka and ZooKeeper on Docker](https://link.medium.com/wKgcaLFgnS) are used with slight modifications.
 The IPs have been modified to get those set up by Docker machine. 
 
+# Custom Docker Hub
+```bash
+docker login localhost:8082
+# Provide local user/paswd Nexus credential for the repos 
+
+```
+
 # Set up Kafka
 ## ZooKeeper
 ```bash
-cd src/docker
-docker-compose up -d zookeeper
+docker-compose -f src/docker/docker-compose.yml up -d zookeeper
+```
 
 or
 
+```bash
 docker run -d \
     --name zookeeper \
+    -p 2181:2181 \
+    jplock/zookeeper
+```
+
+Using the local Docker Hub
+```bash
+docker run -d \
+    --name localhost:8082/zookeeper \
     -p 2181:2181 \
     jplock/zookeeper
 ```
@@ -81,25 +97,27 @@ docker run -d \
 To start a broker use the ./bin/bash/start_kafka_broker.sh command. Running it with no parameters show the usage.
 For instance:
 ```bash
-./bin/bash/start_kafka_broker.sh 1 9092
+for i in {2..4}; do 
+    ./src/bash/start_kafka_broker.sh ${i} ${i}9092
+done
 ```
 
 # Create a topic
 ```bash
 docker run \
-    --rm ches/kafka kafka-topics.sh \
+    --rm localhost:8082/ches/kafka kafka-topics.sh \
     --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
     --create \
     --topic memory \
     --replication-factor 3 \
-    --partitions 1
+    --partitions 2
 ```
 
 # Alter a topic
 ```bash
 docker run \
     -v /Users/hujol/Projects/kafka_streaming/kafka_pc_vital_info/src/bash/modification_topic_replica.json:/kafka/modification_topic_replica.json \
-    --rm ches/kafka \
+    --rm localhost:8082/ches/kafka \
     kafka-reassign-partitions.sh \
     --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
     --reassignment-json-file /kafka/modification_topic_replica.json \
@@ -109,6 +127,7 @@ docker run \
 # List the topics
 ```bash
 docker run \
+    --rm localhost:8082/ches/kafka \
     kafka-topics.sh \
     --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
     --list
@@ -117,7 +136,7 @@ docker run \
 # Describe a topic (partitions, replicas, etc)
 ```bash
 docker run \
-    --rm ches/kafka kafka-topics.sh \
+    --rm localhost:8082/ches/kafka kafka-topics.sh \
     --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
     --describe \
     --topic memory
@@ -130,7 +149,7 @@ topic.
 
 ```bash
 docker run --rm --interactive \
-    ches/kafka kafka-console-producer.sh \
+    localhost:8082/ches/kafka kafka-console-producer.sh \
     --broker-list $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}'):9092 \
     --topic toto
 ```
@@ -144,7 +163,7 @@ cd src/bash
 # Consumer on topic toto
 ```bash
 docker run --rm \
-    ches/kafka kafka-console-consumer.sh \
+    localhost:8082/ches/kafka kafka-console-consumer.sh \
     --bootstrap-server $(docker inspect kafka -f '{{.NetworkSettings.IPAddress}}'):9092 \
     --from-beginning \
     --topic memory
@@ -153,7 +172,7 @@ docker run --rm \
 # Get the Number of partition for the topic
 ```bash
 docker run --rm \
-    ches/kafka \
+    localhost:8082/ches/kafka \
     kafka-topics.sh --describe --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
     --topic memory | awk '{print $2}' | uniq -c |awk 'NR==2{print "count of partitions=" $1}'
 ```
@@ -161,7 +180,7 @@ docker run --rm \
 # Add partitions to existing topic
 ```bash
 docker run --rm \
-    ches/kafka \
+    localhost:8082/ches/kafka \
     kafka-topics.sh --alter --zookeeper $(docker inspect zookeeper -f '{{.NetworkSettings.IPAddress}}'):2181 \
     --topic memory --partitions 3
 ```
@@ -182,7 +201,7 @@ docker run -ti \
     -v /Users/hujol/.m2/repository:/root/.m2/repository \
     -v /Users/hujol/.m2/settings-local.xml:/root/.m2/settings.xml \
     -v /Users/hujol/Projects/kafka_streaming/kafka_pc_vital_info/vitalinfo:/app/kafkap \
-    maven:3.6-alpine \
+    localhost:8082/maven:3.6-alpine \
     mvn -f /app/kafkap/pom.xml -DMAVEN_OPTS="-Xmx792m -XX:MaxPermSize=396m" -Dmaven.test.skip=true exec:exec@kafkap
 ```
 

@@ -2,7 +2,7 @@ version: '3'
 services:
   zookeeper:
     container_name: zookeeper
-    image: jplock/zookeeper
+    image: localhost:8082/jplock/zookeeper
     ports:
     - 2181:2181
     expose:

@@ -35,7 +35,7 @@ public class App {
         }
 
         Properties props = new Properties();
-        props.put("bootstrap.servers", "172.17.0.1:9092,172.17.0.1:29092,172.17.0.1:39092");
+        props.put("bootstrap.servers", "172.17.0.1:19092,172.17.0.1:29092,172.17.0.1:39092");
         props.put("acks", "all");
         props.put("delivery.timeout.ms", 2000);
         props.put("request.timeout.ms", 1000);
