@@ -63,6 +63,53 @@
             <build>
                 <pluginManagement>
                     <plugins>
+                        <!--
+                        Copy project dependencies into a directory
+                        -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-depdendency-plugin</artifactId>
+                            <version>3.1.1</version>
+                            <executions>
+                                <execution>
+                                    <id>copy-dependencies</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>copy-dependencies</goal>
+                                    </goals>
+                                    <configuration>
+                                        <!-- exclude junit, we need runtime dependency only -->
+                                        <includeScope>runtime</includeScope>
+
+
+                                        <!--
+                                        The documentation on this plugin says:
+                                        https://maven.apache.org/plugins/maven-dependency-plugin/examples/copying-project-dependencies.html
+
+                                        that the tag <outputDirectory> should work, but in fact the property in the POM
+                                        does not get passed to the plugins.
+
+                                        Instead one should pass it on command line like this.
+                                        -DoutputDirectory=libs
+
+                                        Here is the complete command:
+                                        mvn -DMAVEN_OPTS="-Xmx1g -XX:MaxPermSize=512m" -Dmaven.test.skip=true \
+                                        -DoutputDirectory=target/libs clean dependency:copy-dependencies package
+
+                                        Then to run a Main class - a class with a main(...) method in it - do:
+                                        Note that this method is when there is no main-class defined in the MANIFEST.MF.
+
+                                        java -cp ./target/app.jar \
+                                        Main \
+
+                                        -->
+                                        <outputDirectory>${project.build.directory}/test-not-working</outputDirectory>
+
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+
                         <plugin>
                             <groupId>org.codehaus.mojo</groupId>
                             <artifactId>exec-maven-plugin</artifactId>

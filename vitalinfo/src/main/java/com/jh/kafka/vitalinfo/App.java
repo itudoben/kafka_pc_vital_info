@@ -58,7 +58,7 @@ public class App {
 
 // Conversion
                 SimpleDateFormat sdf;
-                sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
                 sdf.setTimeZone(TimeZone.getTimeZone("CET"));
 
 

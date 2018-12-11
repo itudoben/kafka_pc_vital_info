@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM localhost:8082/ubuntu:16.04
 MAINTAINER Pierre Carion <pcarion@gmail.com>
 
 # From these post: https://medium.com/@pcarion/a-consul-a-vault-and-a-docker-walk-into-a-bar-d5a5bf897a87

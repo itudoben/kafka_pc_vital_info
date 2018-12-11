@@ -195,6 +195,8 @@ mvn archetype:generate -DgroupId=com.jh.kafka.vitalinfo \
     -DinteractiveMode=false
 ```
 
+java -cp ".:$(pwd)/vitalinfo/target/libs/:$(pwd)/vitalinfo/target/vitalinfo-0.0.1.jar" com.jh.kafka.vitalinfo.App
+
 ## run the app in docker
 ```bash
 docker run -ti \
