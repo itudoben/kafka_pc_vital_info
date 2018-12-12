@@ -19,9 +19,15 @@ mvn -f ./vitalinfo/pom.xml \
     -Dmaven.test.skip=true \
     -DoutputDirectory=target/libs \
     clean dependency:copy-dependencies package
-    
+
+# Copy the Maven settings.xml file for the image.
+cp /Users/hujol/.m2/settings-local.xml ./settings-local.xml
+
 # Build the docker image
 docker build -f ./src/docker/Dockerfile_vi_app -t localhost:8083/jhujol/viapp:0.0.1 .
+
+# Remove the Maven settings.xml.
+rm ./settings-local.xml
 
 # Publish the image in the local Docker hub
 docker push localhost:8083/jhujol/viapp:0.0.1

@@ -3,7 +3,7 @@ FROM localhost:8082/maven:3.6-alpine
 RUN mkdir -p /root/.m2
 
 COPY vitalinfo /app/kafkap
-COPY /Users/hujol/.m2/settings-local.xml /root/.m2/settings.xml
+COPY settings-local.xml /root/.m2/settings.xml
 
 ENTRYPOINT ["mvn",  "-f", "/app/kafkap/pom.xml", "-DMAVEN_OPTS='-Xmx792m -XX:MaxPermSize=396m'", "-Dmaven.test.skip=true"]
 CMD ["exec:exec@kafkap"]
