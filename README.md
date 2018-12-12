@@ -1,26 +1,33 @@
 # Forewords 
-This project is at this moment a WORK IN PROGRESS v0.0.1. As the project goes, progress is shared via Git commits.
+This project is a work in progress shared via Github.
 
 I used technology documentations, blogs, articles, stashoverflow, google, etc. 
 I will make sure to give proper credits to the authors in the [references](#references) section.
+
 If I unintentionally missed anyone or made a mistake, please let me know through the 
 [Github issues](https://github.com/itudoben/kafka_pc_vital_info/issues) and I will correct it asap. 
 
 # Introduction
-The goal of this project is to provide:
- - an installation only on macOS for the time being.
- - a working template for setting up ZooKeeper and Kafka with multiples nodes using Docker and Kubernetes.
- - consumer to process incoming data and store the results in Hive. 
- - one command/script to set this all up.
+The goal of this project is to provide a simple framework for building a distributed streaming processing solution based
+on Docker, Kubernetes, Hive and Kafka.
 
-# TODO 
+The requirements are: 
+ - a template for setting up ZooKeeper and Kafka with multiples nodes using Docker and Kubernetes.
+ - consumer to process incoming data and store the results in Hive. 
+ - one command/script to set this all up for macOS.
+
+# Future Improvements 
  - processing of selected Kafka Streams with a Machine Learning model for classification or prediction.
  - available for *nix platforms.
  
 # Requirements
 - A Personal Computer running macOS version 10.13.6.
-- Docker Desktop for macOS version 2.0.0.0-mac81 (29211). 
+- Docker Desktop for macOS version 2.0.0.0-mac81 (29211).
+- Minikube and kubernetes installed.
+- Maven 3.6 and Java 8.
+- an IDE like IntelliJ IDEA, etc. 
 
+# Technologies for Vital Info Collection
 For getting vital information i.e. cpu, disk, etc, we used Ruby [iStats](https://rubygems.org/gems/iStats/versions/1.2.0). 
 After installing the Gem, here is how to get the CPU temperature in Celsius.
 
@@ -45,7 +52,7 @@ $ cat /proc/meminfo | grep MemFree | cut -c 18-27
 There are other metrics available and we will integrate them as we go.
 
 # Architecture
-Vital information of a simple docker container will stream through Kafka and will be stored in Hive.
+Vital information from a simple docker containerised app will stream through Kafka and will be stored in Hive. 
 
 # Docker
 From within a docker container one can access the outside services via the Domain Name host.docker.internal 
@@ -66,8 +73,7 @@ The IPs have been modified to get those set up by Docker machine.
 # Custom Docker Hub
 ```bash
 docker login localhost:8082
-# Provide local user/paswd Nexus credential for the repos 
-
+# Provide local user/paswd Nexus credential of the Nexus repos. 
 ```
 
 # Set up Kafka
@@ -185,7 +191,8 @@ docker run --rm \
     --topic memory --partitions 3
 ```
 
-# Maven
+# Vital Info Collector App
+## Maven
 First let's create our Java producer that will stream information to a Kafka topic.
 
 ```bash
@@ -205,6 +212,59 @@ docker run -ti \
     -v /Users/hujol/Projects/kafka_streaming/kafka_pc_vital_info/vitalinfo:/app/kafkap \
     localhost:8082/maven:3.6-alpine \
     mvn -f /app/kafkap/pom.xml -DMAVEN_OPTS="-Xmx792m -XX:MaxPermSize=396m" -Dmaven.test.skip=true exec:exec@kafkap
+```
+
+## Dockerfile and Deployment
+The first step is to remove any existing Docker image of the collector app.
+Then call the `deploy_vi_app.sh` script that will build the Docker image and publish it on the local Docker Hub hosted
+in Nexus. 
+```bash
+docker image rm -f localhost:8082/jhujol/viapp:0.0.1 && \
+    ./src/bash/deploy_vi_app.sh /Users/hujol/Projects/kafka_streaming/kafka_pc_vital_info
+```
+
+To test the new image and look what's inside one can run the following command, note that the `--entrypoint` overrides
+the default entrypoint to enable instead an interactive `bash` shell.
+```bash
+docker run --rm -ti --entrypoint /bin/bash localhost:8082/jhujol/viapp:0.0.1
+```
+
+To run the Vital Info Collector App, the following `bash` command is executed:
+```bash
+docker run --rm localhost:8082/jhujol/viapp:0.0.1
+```
+
+The first thing that will happen is that Maven will download all the needed dependencies from our local Nexus hub.
+Then it will run the executable and here is the output of the results.
+
+```bash
+Downloaded from mac_os_group: http://172.17.0.1:8081/repository/mac_os_group/org/codehaus/plexus/plexus-utils/3.0.20/plexus-utils-3.0.20.jar (243 kB at 156 kB/s)
+ARG: --somestuff=${c}
+${c}
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Sending record 0
+Record sent with key 0 to partition 0 with offset 0
+....
+```
+
+One can run a Kafka consumer using one of the broker like this:
+```bash
+./src/bash/consumer_listen_topic.sh 3 39092 memory
+```
+
+The output on the consumer looks like this:
+```bash
+2018-12-12T09:48:02.206 - 172.17.0.8 -  #0 - 92,672 KB
+2018-12-12T09:48:04.870 - 172.17.0.8 -  #1 - 92,672 KB
+2018-12-12T09:48:06.878 - 172.17.0.8 -  #2 - 92,672 KB
+...
+```
+
+## Kubernetes and MiniKube
+```bash
+minikube start --cpus 2 --memory 4096
 ```
 
 # ZooKeeper CLI
@@ -280,7 +340,7 @@ HA Enabled         true
 Then unseal the vault using 3 of the unseal keys:
 ```bash
 / # vault operator unseal
-Unseal Key (will be hidden): 
+Unseal Key \(will be hidden\): 
 Key                Value
 ---                -----
 Seal Type          shamir
